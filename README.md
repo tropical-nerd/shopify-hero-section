@@ -1,6 +1,6 @@
 # Shopify Hero Section
 
-A responsive Shopify hero section compatible with Online Store 2.0. Made to augment themes that do not include a similiar section by default. This is an opinionated hero that designed to prioritize the following criteria:
+A responsive Shopify hero section compatible with Online Store 2.0. Made to augment themes that do not include a similiar section by default. This is an opinionated hero designed to prioritize the following criteria:
 
 - High image quality on screens up to 4k resolution
 - Deliver responsive optimized images to the appropriate devices using the `<picture>` tag and `srcset` attribute to 

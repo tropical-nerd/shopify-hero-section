@@ -1,0 +1,211 @@
+{%- liquid 
+  assign image_1 = section.settings.image_1
+  assign image_2 = section.settings.image_2
+  assign portrait_widths = '1688 1280 800 640 480' | split: ' '
+  assign portrait_srcset = ''
+  assign landscape_widths = '3840 3000 2400 1600 1280 800 640' | split: ' '
+  assign landscape_srcset = ''
+-%}
+
+{%- for width in landscape_widths -%}
+  {%- capture src -%}
+    {{ image_1 | image_url: width: width }} {{ width }}w
+  {%- endcapture -%}
+  {%- assign landscape_srcset = landscape_srcset | append: src -%}
+  {%- if width != landscape_widths.last -%}
+    {%- assign landscape_srcset = landscape_srcset | append: ', ' -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- for width in portrait_widths -%}
+  {%- capture src -%}
+    {{ image_2 | image_url: width: width }} {{ width }}w
+  {%- endcapture -%}
+  {%- assign portrait_srcset = portrait_srcset | append: src -%}
+  {%- if width != portrait_widths.last -%}
+    {%- assign portrait_srcset = portrait_srcset | append: ', ' -%}
+  {%- endif -%}
+{%- endfor -%}
+
+<div class="hero__inner {{ section.settings.class }}">
+  {%- if image_1 and image_2 -%}
+    <picture>
+      <source srcset="{{ portrait_srcset }}" media="(max-width: 800px) and (orientation: portrait)" sizes="100vw">
+      <img src="{{ image_1 | image_url: width: 1920 }}" srcset="{{ landscape_srcset }}" class="hero__image" alt="{{ image_1.alt | escape }}" width="{{ image_1.width }}" height="{{ image_1.height }}">
+    </picture>
+  {%- elsif image_1 -%}
+    <img src="{{ image_1 | image_url: width: 1920 }}" srcset="{{ landscape_srcset }}" class="hero__image" alt="{{ image_1.alt | escape }}" width="{{ image_1.width }}" height="{{ image_1.height }}">
+  {%- else -%}
+    <div class="hero__image placeholder-image">
+      {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+    </div>
+  {%- endif -%}
+
+  <div class="hero__text-container" style="--width-hero-text-container: {{ section.settings.text_max_width }}rem">
+    {%- for block in section.blocks -%}
+      {%- case block.type -%}
+        {%- when 'heading' -%}
+          {%- unless block.settings.title == blank -%}
+            <h2 class="hero__heading ff-heading fs-heading-2-base fs-heading-1-base-ns" style="color: {{ block.settings.color }}">{{ block.settings.title | newline_to_br }}</h2>
+          {%- endunless -%}
+        
+        {%- when 'subheading' -%}
+          {%- unless block.settings.subheading == blank -%}
+            <div class="hero__subheading rte ff-body fs-body-base fs-body-large-ns" style="color: {{ block.settings.color }}">
+              {{ block.settings.subheading }}
+            </div>
+          {%- endunless -%}
+
+        {%- when 'button' -%}
+          {%- if block.settings.link != blank and block.settings.link_text != blank -%}
+            <a href="{{ block.settings.link }}" class="hero__button fs-body-base btn btn--primary btn--medium">
+              {{ block.settings.link_text }}
+            </a>
+          {%- endif -%}
+      {%- endcase -%}
+    {%- endfor -%}
+  </div>
+</div>
+
+{% javascript %}
+  const hero = document.querySelector('.hero');
+  let windowWidth = window.innerWidth;
+  let windowHeight = window.innerHeight;
+  let widthChanged = false;
+  const mediaQuery = window.matchMedia('(max-width: 800px) and (orientation: portrait)');
+  
+  function setHeroHeight() {
+    hero.style.height = `calc(${windowHeight}px - var(--height-max-logo) - (2 * var(--spacing-small)))`;
+  }
+
+  function handleResize() {
+    if (windowWidth !== window.innerWidth) {
+      widthChanged = true;
+      windowHeight = window.innerHeight;
+    }
+
+    if (widthChanged && mediaQuery.matches) {
+      setHeroHeight();
+    } else if (widthChanged && !mediaQuery.matches) {
+      hero.style.height = null;
+    }
+
+    widthChanged = false;
+    windowWidth = window.innerWidth;
+  }
+
+  if (mediaQuery.matches) {
+    setHeroHeight();
+  }
+
+  window.addEventListener('resize', handleResize);
+  
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Hero Image",
+  "class": "hero",
+  "settings": [
+    {
+      "id": "image_1",
+      "type": "image_picker",
+      "label": "Hero Image (Landscape)",
+      "info": "Recommended dimensions: 3840x2160px"
+    },
+    {
+      "id": "image_2",
+      "type": "image_picker",
+      "label": "Hero Image (Portrait)",
+      "info": "Recommended dimensions: 1688x3000px"
+    },
+    {
+      "type": "range",
+      "id": "text_max_width",
+      "label": "Text max width",
+      "min": 10,
+      "max": 60,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "id": "class",
+      "type": "text",
+      "label": "Custom Class",
+      "info": "Use the custom class to assign styles via theme.css"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "Heading",
+      "type": "heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Title"
+        },
+        {
+          "type": "color",
+          "id": "color",
+          "label": "Heading Color",
+          "default": "#ffffff"
+        }
+      ]
+    },
+    {
+      "name": "Text",
+      "type": "subheading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "subheading",
+          "label": "Text",
+          "default": "<p>Subheading</p>"
+        },
+        {
+          "type": "color",
+          "id": "color",
+          "label": "Color",
+          "default": "#ffffff"
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "name": "Button",
+      "limit": 1,
+      "settings": [
+        {
+          "id": "link",
+          "type": "url",
+          "label": "Button Link"
+        },
+        {
+          "id": "link_text",
+          "type": "text",
+          "label": "Button Text",
+          "default": "Read more"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Image",
+      "category": "Custom",
+      "blocks": [
+        {
+          "type": "heading"
+        },
+        {
+          "type": "subheading"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
